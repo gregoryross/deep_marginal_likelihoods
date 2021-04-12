@@ -324,7 +324,7 @@ then in the large data limit, we find that the likelihood can be expressed as
 \end{align}
 where $H(Y|X)$ is the conditional entropy of the true data generating distribution, and $D(p_t(y|x) || p_m(y|x,\theta))$ is the Kullback-Leibler divergence (or, relative entropy) between the true generating distribution and the likelihood for a given value of $\theta$. The above forms the starting point for the Akaike information criterion. Plugging this into equation \ref{eq:lb}, we have
 \begin{align}
-\lim_{N \rightarrow \infty} L_m(D)  \geq -N H(Y|X) - N \mathbf{E}_{\theta|m} D(p_t(y|x) || p_m(y|x,\theta)),
+\lim_{N \rightarrow \infty} L_m(D)  \leq -N H(Y|X) - N \mathbf{E}_{\theta|m} D(p_t(y|x) || p_m(y|x,\theta)),
 \end{align}
 where $ \mathbf{E}_{\theta|m}$ denotes the expectation with respect to the model prior. From the perspective od model comparison, the best model is one that minimizes $ \mathbf{E}_{\theta|m} D(p_t(y|x) || p_m(y|x,\theta))$. As the KL divergence is always positive, the negative of the conditional entropy $H(Y|X)$ presents an absolute limit that cannot be exceeded by any model. 
 

@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pylab as plt
 
+import sys
+sys.path.append('../')
 import norm_inv_gamma as nig
-
 
 def main():
     """

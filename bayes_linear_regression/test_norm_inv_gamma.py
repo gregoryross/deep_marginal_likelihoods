@@ -3,6 +3,7 @@ from scipy import stats
 
 import norm_inv_gamma as nig
 
+
 """
 python -m pytest test_norm_inv_gamma.py
 """

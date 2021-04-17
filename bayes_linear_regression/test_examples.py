@@ -1,6 +1,5 @@
 import tempfile
 import os
-import norm_inv_gamma as nig
 
 def test_regression_1d():
     """
@@ -24,7 +23,18 @@ def test_convergence_marglike():
         conv.main()
         os.chdir(cwd)
 
+def test_poly_model_comp():
+    """
+    Polynomial model comparison with the marginal likelihood and mean log likelihood.
+    """
+    from examples import model_comparison_with_loglike as comp
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        cwd = os.getcwd()
+        os.chdir(tmp_dir)
+        comp.main(nsamps=100)
+        os.chdir(cwd)
+
 if __name__ == "__main__":
     test_regression_1d()
     test_convergence_marglike()
-
+    test_poly_model_comp()

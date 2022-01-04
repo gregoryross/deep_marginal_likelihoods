@@ -4,6 +4,8 @@ from jax import grad, jit, vmap
 from jax import random
 from jax.experimental import optimizers
 
+def softplus(x): return np.logaddexp(x, 0.)
+
 
 def kl_normal(mu1, sigma1, mu2, sigma2):
     """
@@ -45,7 +47,7 @@ def nn_predict(params, inputs):
     """
     for W, b in params[:-1]:
         outputs = np.dot(inputs, W) + b
-        inputs = np.tanh(outputs)
+        inputs = softplus(outputs) #np.tanh(outputs)
 
     W, b = params[-1]
     return np.dot(inputs, W) + b

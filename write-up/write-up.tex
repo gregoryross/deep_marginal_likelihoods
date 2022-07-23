@@ -1,0 +1,245 @@
+\documentclass{article}
+
+
+
+\usepackage{arxiv}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{lipsum}		% Can be removed after putting your text content
+\usepackage{graphicx}
+\usepackage{natbib}
+\usepackage{doi}
+
+\DeclareRobustCommand{\bbone}{\text{\usefont{U}{bbold}{m}{n}1}}
+\DeclareMathOperator{\Ex}{\mathbb{E}}% expected value
+
+\DeclarePairedDelimiterX{\infdivx}[2]{(}{)}{%
+  #1\;\delimsize\|\;#2%
+}
+\newcommand{\infdiv}{D\infdivx}
+\newcommand{\infdivlb}{D_{lb}\infdivx}
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+
+
+
+\title{Practical bounds to the Bayesian marginal likelihood using deep learning}
+
+%\date{September 9, 1985}	% Here you can change the date presented in the paper title
+%\date{} 					% Or removing it
+
+\author{ \href{https://orcid.org/0000-0000-0000-0000}{\includegraphics[scale=0.06]{orcid.pdf}\hspace{1mm}Gregory A.~Ross} \\
+	Schr\"{o}dinger Inc,\\
+	New York, New York, 10036\\
+	%% examples of more authors
+	%\And
+	%\href{https://orcid.org/0000-0000-0000-0000}{\includegraphics[scale=0.06]{orcid.pdf}\hspace{1mm}Elias D.~Striatum} \\
+	%Department of Electrical Engineering\\
+	%Mount-Sheikh University\\
+	%Santa Narimana, Levand \\
+	%\texttt{stariate@ee.mount-sheikh.edu} \\
+	%% \AND
+	%% Coauthor \\
+	%% Affiliation \\
+	%% Address \\
+	%% \texttt{email} \\
+	%% \And
+	%% Coauthor \\
+	%% Affiliation \\
+	%% Address \\
+	%% \texttt{email} \\
+	%% \And
+	%% Coauthor \\
+	%% Affiliation \\
+	%% Address \\
+	%% \texttt{email} \\
+}
+
+% Uncomment to remove the date
+%\date{}
+
+% Uncomment to override  the `A preprint' in the header
+%\renewcommand{\headeright}{Technical Report}
+%\renewcommand{\undertitle}{Technical Report}
+\renewcommand{\shorttitle}{\textit{arxiv} Template}
+
+%%% Add PDF metadata to help others organize their library
+%%% Once the PDF is generated, you can check the metadata with
+%%% $ pdfinfo template.pdf
+\hypersetup{
+pdftitle={A template for the arxiv style},
+pdfsubject={q-bio.NC, q-bio.QM},
+pdfauthor={David S.~Hippocampus, Elias D.~Striatum},
+pdfkeywords={First keyword, Second keyword, More},
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+	Model selection in Bayesian analysis is critically important but remains immensely challenging despite the increasing ease of sampling methods. To aid formal model comparison, simple bounds to the marginal likelihood are introduced as well as straightforward ways to compute them using deep learning techniques. 
+\end{abstract}
+
+
+% keywords can be removed
+\keywords{First keyword \and Second keyword \and More}
+
+
+\section{Introduction}
+When attempting to create quantitative and predictive models of data, one seldom has a single model in mind.
+At some point, one inevitably has to select aspects of the model like the functional form and the number of parameters.
+The formal approach to this choice is known as model selection, which can be an immensely complex and difficult task to do rigorously.
+The singular interest of this work is model selection in a Bayesian context, whose framework naturally admits a quantity - the marginal likelihood or marginal evidence - through which all models can be judged and compared.
+Although there remains some debate as to the usefulness of marginal likelihoods, model selection based on marginal likelihoods is popular because of its consistency (in the formal sense), its interpretability, and its connection with other model selection methods such as cross validation -  a technique that is important within both frequentist and Bayesian frameworks. 
+
+In the majority of ``real life'' Bayesian modelling exercises, one uses computational techniques to sample parameters of interest from the posterior distribution. 
+While there are various types of sampling methods, the most common use Markov chain Monte Carlo, owing to its adaptability and ease of use.
+There exist a number of probabilistic programming languages, such as BUGS, pyMC, and Edward, that greatly facilitate the design and implementation of Bayesian models. 
+In these languages, sampling from the posterior can essentially be done automatically, usually with a robust MCMC method after the model is specified. 
+Nowadays, sampling methods tap into the increased speed and available of graphical processing units, making sampling less and less of a computational burden.
+The increasing ease and speed of Bayesian model building and sampling has not corresponded to an ease in the computation of marginal likelihoods, whose calculation remains a rarefied domain of expertise. 
+
+The deviance information criterion (DIC) is a quantity that can be calculated using samples from the posterior alone and was designed to aid model comparison.
+In this framework, the best model is one that has the lowest DIC. 
+The ease of use of the DIC has made it a very popular model comparison tool, and since its introduction, there now exist and number of variants and improvements. 
+However, unlike the marginal likelihood, its use as a model selection tool is of somewhat questionable validity, and, unlike the marginal likelihood, a model with the lowest DIC does not necessarily have the highest prediction accuracy on new data.
+
+This works aims to bridge the gap between the utility of the DIC and the rigor of marginal likelihoods for comparing Bayesian models. Given samples from the prior or posterior, the methods presented here work by framing the computation of the marginal likelihood as an optimization problem, in a manner that is not wholly dissimilar to the framework of variational Bayesian analysis.
+Upper and lower bounds to the marginal likelihood are derived that, with the aid of deep learning techniques, can be computed automatically and in a straightforward manner. 
+The greater the expressibility of the neural network, the tighter the bounds.
+In particular, it is shown that the upper bound, which uses samples from the posterior,  is tighter than the lower bound and of more practical use. These upper and lower bounds are applied to classical Bayesian problems and are shown to be competitive or superior to alternative fast model comparison tools. 
+
+
+\section{Background theory}
+\label{sec:theory}
+In Bayesian modelling, one is interested in estimating the parameters of a model, denoted $\theta = \{\theta_1, \theta_2, ..., $\theta_k \} $, given some data, $x = \{x_1, x_2, ..., x_N \}$. We will assume that $x_i \in \mathbb{R}^D$, with the actual value of $D$ being unimportant. All inferences of $\theta$ are summarized by the posterior distribution, $p(\theta | x)$, which is proportional to the product of the likelihood, $p(x|\theta)$, and prior, $p(\theta)$. For a single model $m$ out of a total of $M$ models,  the relationship between these quantities is given by Bayes Theorem:
+\begin{align}
+p_m(\theta | x) =  \frac{p_m(x|\theta) p_m(\theta)}{ \int p_m(x|\theta) p_m(\theta) \, d\theta}.
+\end{align}
+The normalising factor on the right-hand side is the marginal likelihood of model $m$ and whose estimation is of primary interest in this work. As will hopefully be clear below, it is advantages to consider the logarithm of the marginal likelihood 
+\begin{align}
+\mathcal{L}_m(x) = \ln \int p_m(x|\theta) p_m(\theta)  \, d\theta.
+\end{align}
+When one has a total of $M$ models to choose from, the most faithfully Bayesian approach is to use all models and weight each prediction from $m$ proportional to $e^{\mathcal{L}_m(x)}$. However, this approach can be computationally very expensive when $M$ is large. In that case, a pragmatic approach is to select the model with the highest $\mathcal{L}_m(x)$ for prospective use.
+
+\subsection{Information criteria in model selection}
+\subsubsection{Bayesian information criterion}
+Although $\mathcal{L}_m(x)$ is very difficult to calculate for most models, it greatly simplifies in the asymptotic data limit. In 1978, Schwarz showed that, under certain assumptions, as $N \rightarrow \infty$, $\mathcal{L}_m(x)$  has the approximate limit
+\begin{align}
+BIC_m(x,\theta^*) = \ln (\, p_m(x|\theta_m^*) \,) - \frac{1}{2}k_m\ln(N) 
+\end{align}
+%\begin{align}
+%    \mathcal{L}_m(x) = \ln (\, p_m(x|\theta_m^*) \,) - \frac{1}{2}k_m\ln(N) + \mathcal{O}(1)
+%    \label{eq:bic}
+%\end{align}
+%\begin{align}
+%    \lim_{N\rightarrow \infty}\mathcal{L}_m(x) &= BIC_m(x,\theta^*) + R \\
+%   BIC_m(x,\theta^*) &= \ln (\, p_m(x|\theta_m^*) \,) - \frac{1}{2}k_m\ln(N) 
+%    \label{eq:bic}
+%\end{align}
+where $\theta_m^*$ is the vector of parameters that maximizes the likelihood. $k_m$ is the dimensionality of $\theta_m$ in the model $m$  (i.e. the number of parameters). This limiting form of $\mathcal{L}_m(x)$ is known as the Bayesian information criterion (BIC); its simplicity and ease of use has made it a popular model comparison score. Similiar to the Akaike information criterion (AIC) that came before it, model selection using the BIC can be seen as compromise between the goodness of fit (via the maximum likelihood term) and the model complexity (via the the $k_m\ln(N)$ term). 
+%Via the $k_m\ln(N)$ term, models with more free parameters are penalized to a greater degree. In this way, model selection with the BIC - and by extension $\mathcal{L}_m(x)$ - can be considered as applying Occam's Razor.
+
+\subsubsection{Deviance information criterion}
+From a purely Bayesian perspective, the lack of dependence of the BIC on the prior may not be desirable. Priors can reflect important, pre-existing information and help regularize models by reducing the variance of future predictions. Priors can also serve to reduce the effective dimensionality of model, such that the BIC may penalize the model complexity too severely in cases when $N$ is not large. 
+
+To aid Bayesian model comparison, Spiegelhalter et al. introduced the deviance information criterion (DIC). It is not an approximation to the marginal likelihood, but instead was designed as a practical way to compare Bayesian models using samples from the posterior distribution. To motivate the DIC in manner differently from Spiegelhalter et al. that will help clarify the results later in this manuscript, consider the Taylor series of the log-likelihood when it is expanded about the posterior mean of the parameters $\hat{\theta} \equiv \Ex_{\theta | x} [\theta]$. Let all terms except the first term be grouped into the remainder $R(\theta,\hat{\theta})$
+\begin{align}
+    \ln(p(x|\theta)) &= \ln(p(x|\hat{\theta})) + R(\theta, \hat{\theta}) \text{\, \, such that} \notag\\
+    \Ex_{\theta | x} \left[ \ln(p(x|\theta)) \right] &= \ln(p(x|\hat{\theta})) + \Ex_{\theta | x} \left[ R(\theta, \hat{\theta}) \right]
+    \label{eq:post_loglike}
+\end{align}
+If the posterior mean, $\hat{\theta}$, and the maximum likelihood estimate, $\theta^*$, are equal, the above expansion has the same form as the BIC, with $\Ex_{\theta | x} [  R(\theta, \hat{\theta}) ]$ acting the  regularizing term - a negative number - that penalizes model complexity. This suggests, at least with Gaussian like posterior distributions, that the posterior mean of the log-likelihood, i.e. $\Ex_{\theta | x} [ \ln(p(x|\theta))]$, may serve as a score for model comparison as it trades-off goodness of fit with model complexity. The DIC exploits the regularizing effects of the mean log-likelihood for model comparison. In the notation of this manuscript, the DIC is defined as 
+\begin{align}
+    DIC &= -2  \Ex_{\theta | x} \left[  \ln(p(x|\theta)) \right] - 2 \Ex_{\theta | x} \left[ R(\theta, \hat{\theta}) \right] \\
+    &=-2\ln(p(x|\hat{\theta})) - 4\Ex_{\theta | x} \left[ R(\theta, \hat{\theta}) \right] .
+    \label{eq:dic}
+\end{align}
+Unlike the marginal likelihood, models are preferred that have a lower DIC. As $\Ex_{\theta | x} [  R(\theta, \hat{\theta}) ]$ arises from the Taylor expansion of $\Ex_{\theta | x} [ \ln(p(x|\theta)) ]$ (equation \ref{eq:post_loglike}), by adding it to the mean log-likelihood, the DIC can be thought of as doubling the complexity penalty that is inherent in the  mean log-likelihood. Spiegelhalter et al. defined the effective number of parameters in a model as $-2 \Ex_{\theta | x} [ R(\theta, \hat{\theta}) ]$, and they showed this produces intuitive results in a number of Bayesian models. 
+
+The DIC can be computed from samples from the posterior distribution, which allows practitioners to straightforwardly perform inference and model comparison with a single set of samples. However, as recognized by Spiegelhalter et al., the DIC is not invariant with respect to reparameterization, making its use in some instances unreliable. Being heuristic in nature, the domain where the DIC is appropriate for model selection is less well defined than the marginal likelihood.
+
+\section{Bounding marginal likelihoods}
+\subsection{Upper bounds}
+Starting with the Bayes theorem, we can express the marginal likelihood, $\mathcal{L}(x)$, as
+\begin{align}
+\mathcal{L}(x) &= \ln p(x | \theta) - \ln \frac{p(\theta | x)}{p(\theta)} \label{eq:logmarglike} \\
+&= \int   p(\theta|x) \ln p(x | \theta)  \, d\theta  -  \int p(\theta|x) \ln \frac{p(\theta | x)}{p(\theta)}  \, d\theta  \notag\\
+&=\Ex_{\theta | x} [ \ln  p(x|\theta)]  -  \infdiv[\big]{p(\theta | x)}{p(\theta)},
+\label{eq:marg_up}
+\end{align}
+where $\Ex_{\theta | x} [ \ln  p(x|\theta)]$ is the expectation of the likelihood using samples from the posterior, and $\infdiv[\big]{p(\theta | x)}{p(\theta)}$ is the Kullback-Leibler (KL) divergence from the prior to the posterior. The second line uses the fact that $\int \mathcal{L}(x) \, p(\theta|x) \, d\theta = \mathcal{L}(x)$. Pertinently for this work, the KL divergence is strictly non-negative. This leads to a trivial upper bound to $\mathcal{L}(x)$
+\begin{align}
+\mathcal{L}(x) \leq \Ex_{\theta | x} [ \ln  p(x|\theta)],
+\label{eq:ub_post_like}
+\end{align}
+which can be easily estimated as long as one has samples from the posterior distribution. One can have a tighter upper bound to $\mathcal{L}(x)$ if one can compute a lower bound to the KL divergence, $\infdivlb[\big]{p(\theta | x)}{p(\theta)}$:
+\begin{align}
+\mathcal{L}(x) \leq \Ex_{\theta | x} [ \ln  p(x|\theta)] -  \infdivlb[\big]{p(\theta | x)}{p(\theta)}.
+\end{align}
+These simple upper bounds to $\mathcal{L}(x)$ are the primary theoretical result of this work. While there exist a number of lower bounds to the KL divergence [refs?], amongst the most useful for our purpose is that of Nguyen et al.  [Nguyen2009Estimating] which was used by Nowozin et al. [Nowozin2016fGAN] in their development of generative adversarial networks. Let  $V_\omega(\theta):\Theta \rightarrow \mathbb{R}$ be some function (here an neural network) parameterized by $\omega$, then 
+\begin{align}
+   \infdivlb[\big]{a(\theta)}{b(\theta)} = \Ex_{\theta \sim a}[V_\omega(\theta)] - \Ex_{\theta \sim b} [\exp(V_\omega(\theta) - 1) ]
+\end{align}
+Thus, to find a lower bound to the KL divergence, we must maximise the right-hand side, which can be achieved using stochastic gradient decent.
+
+\subsection{Lower bounds}
+A lower bound to the log marginal likelihood can be obtained if express equation \ref{eq:logmarglike} as an expectation over the prior rather than the posterior:
+\begin{align}
+\mathcal{L}(x) &= \Ex_{\theta} [ \ln  p(x|\theta)] + \infdiv[\big]{p(\theta)}{ p(\theta|x)}, \notag\\
+\end{align}
+where $\Ex_{\theta} [ \ln  p(x|\theta)]$ is the expectation of the likelihood over the prior and $\infdiv[\big]{p(\theta)}{ p(\theta|x)}$ is the KL divergence from the posterior to the prior. The mean likelihood term is easy to estimate because in the vast majority of cases, the prior is easy to sample from or one already has samples from the prior (e.g. from Bayesian updating). The non-negativity of KL divergence immediately implies that
+\begin{align}
+\mathcal{L}(x) \geq \Ex_{\theta } [ \ln  p(x|\theta)]. 
+\label{eq:lb_prior_like}
+\end{align}
+Curiously, this suggests that one could perform model comparison using only samples from the prior. However, as we will illustrate, this bound is not as tight as equation \ref{eq:ub_post_like}. Similiarly as with the upper bound, we can construct a tighter lower bound to $\mathcal{L}(x)$ with a lower bound to the KL divergence:
+\begin{align}
+\mathcal{L}(x) \geq \Ex_{\theta | x} [ \ln  p(x|\theta)] + \infdivlb[\big]{p(\theta | x)}{p(\theta)}
+\end{align}
+The utility of these bounds will be explored with mathematical analysis and numerical examples.
+
+\section*{Still to include...}
+\begin{itemize}
+    \item Asymptotic analysis on the bounds, and how the KL divergence is a measure of the number of free parameters in a model.
+\end{itemize}
+
+
+\subsection{An information theoretic bound in the large $N$ limit}
+As the primary focus of this work is to demonstrate and validate new bounds to the marginal likelihood, it is of interest to establish an absolute upper bound that will serve as a reference in our numerical examples. 
+
+Consider the log-likelihood $\ln p(x|\theta)$. When $x_i$ are independent and identically distributed, we have
+\begin{align}
+    \ln p(x|\theta) & = \ln p(x_1, x_2, ..., x_N|\theta) \notag\\
+    &= \ln \left( p(x_1|\theta) p(x_2|\theta) ... p(x_N|\theta) \right) \notag\\
+    &= \sum_{i=1}^N \ln p(x_i|\theta) \notag
+\end{align}
+Let us now assume that each $x_i$ has been drawn from some ``true'' but unknown distribution $p_t(x)$ and let $N\rightarrow\infty$. Then we have the limit
+\begin{align}
+    \lim_{N \rightarrow \infty} \frac{1}{N}\ln p(x|\theta) &= \int p_t(x) \ln p(x|\theta) dx \notag\\
+    &= \int p_t(x)\ln \left ( p(x|\theta) \frac{p_t(x)}{p_t(x)} \right) \, dx  \notag\\
+    &= \int p_t(x)\ln p_t(x) \, dx + N \int p_t(x)\ln \frac{p(x|\theta)}{p_t(x)} \, dx \notag\\
+    &= - H(x) - \infdivlb[\big]{p_t(x)}{p(x|\theta)} \label{eq:loglike_entropy}
+\end{align}
+The KL divergence term in the penultimate line is the divergence between the true data generating distribution and the model, and it features in model selection methods such as the AIC and minimum description length [Akaike1974, Hansen2001Model]. Combining equations \ref{eq:marg_up} and \ref{eq:loglike_entropy} in the asymptotic data limit we have
+\begin{align}
+\frac{1}{N}\mathcal{L}(x) = - H(x) - \Ex_{\theta | x} \left[ \infdivlb[\big]{p_t(x)}{p(x|\theta)}\right] - \frac{1}{N}\infdiv[\big]{p(\theta | x)}{p(\theta)}
+\end{align}
+and since when $N$ is large $\infdiv[\big]{p(\theta | x)}{p(\theta)} \propto \ln N$ we have
+\begin{align}
+\lim_{N \rightarrow \infty} \frac{1}{N}\mathcal{L}(x) &= - H(x) - \Ex_{\theta | x} \left[ \infdivlb[\big]{p_t(x)}{p(x|\theta)} \right]\\
+&\leq - H(x)
+\end{align}
+That is, the information entropy is an upper bound to the marginal likelihood, which is tight when the Bayesian model can be close to the true data generating distribution. Ideally, when validating our bounds for the marginal likelihood, we will compare the bounds to the actual marginal likelihood. However, we will encounter cases where then marginal likelihood is intractable. The above bound will allow use to use the information entropy of the data generating distribution as a substitute for $\mathcal{L}(x)$ when it cannot be calculated. 
+
+\end{document}
+
+

@@ -15,7 +15,7 @@ useful for validating methods that estimate marginal likelihoods, as we are tryi
 ```
 import norm_inv_gamma as nig
 ```
-First, we need tp specify the parameters of the prior. In this demonstration, we want our model to have 2 regression parameters: one
+First, we need to specify the parameters of the prior. In this demonstration, we want our model to have 2 regression parameters: one
 intercept and one gradient. We need to set the prior covariance matrix between these 2 parameters as well as the mean of
 the prior:
 ```python
@@ -27,14 +27,15 @@ directly below:
 ```python
 prior = nig.NormalInverseGamma(a=3, b=1, mu=mu, cov=cov)
 ```
-To make module validation easier, we can generate a toy regression problem by drawing samples from the prior
+To make module validation easier, we can generate a toy regression problem by drawing regression parameters as well as
+data points from the prior:
 ```python
 explanatory, response, regression_params = nig.gen_toy_data(100, prior)
 ```
 In the above, we are only drawing 100 data points.
 
 One neat aspect of normal-inverse-gamma priors is that they are conjugate with the posterior. Calculating this posterior
-disribution is simple with this model:
+disribution is simple with this module:
 ```python
 post = nig.PostNormalInverseGamma(prior, explanatory, response)
 ```
@@ -52,13 +53,13 @@ can estimate this lower bound using neural nets implemented with `Jax`.
 import kl_lower_bounds as klb
 ```
 Using the `klb.get_kl_lower_bound`, we can estimate the KL divergence between the prior and the postirior as long as we
-have samples from both. So let's quickly generate 5000 samples from both:
+have samples from both. So let's quickly generate 5000 samples from each:
 ```python
 prior_samps = prior.rvs(5000)
 post_samps = post.rvs(5000)
 ```
 For the sake of this example, let's make the neural net very simple, with 1 hidden layer that contains 100 hidden units.
-The output layer must only have one unit as that will be estimating the KL divergence. Currently, the activation
+The output layer must only have one unit for the KL divergence estimate. Currently, the activation
 functions are hard coded as softplus functions. 
 ```python
 layer_shapes = (prior_samps.shape[1], 100, 1)
@@ -77,15 +78,15 @@ kl_lb, final_nn_params = klb.get_kl_lower_bound(nn_params,
 our final estimate for the KL divergence.
 
 ### An upper bound to the marginal likelihood
-To calculate an upper bound to marginal likelihood we need 2 ingrediates: the posterior mean of the log likelihood and an
-upper bound of the KL divergence between the prior and posterior. The posterior mean of the log likelihood can be calculated
+To calculate an upper bound to marginal likelihood we need 2 ingredients: the posterior mean of the log likelihood and an
+upper bound of the KL divergence between the prior and posterior. The posterior mean of the log likelihood can be estimated
 like this:
 ```python
 post_mean_log_like = nig.nig.estimate_mean_loglike(post, explanatory, response)
 ```
-and we our upper bound for the marginal likelihood is the following:
+and our upper bound for the marginal likelihood is the following:
 ```python
-print(post_mean_log_like - `kl_lb`)
+print(post_mean_log_like - kl_lb[-1])
 ```
 We can compare this upper bound to the true value `post.log_marg_like`.
 

@@ -10,9 +10,9 @@ using normal-inverse-gamma priors and the second is for estimating lower bounds 
 between 2 distributions using samples from those distributions. 
 
 ## Manifest
-* `kl_lower_bounds.py` Jax-implementated neural nets that can estimate the lower bound the of KL divergences using samples from distrubutions.  
-* `norm_inv_gamma.py` a set of classes and functions for performing Bayesian linear regression.
-* `examples/` a set of examples that demonstrate some of the functionality of the code.
+* `kl_lower_bounds/` Jax-implementated neural nets that can estimate the lower bound the of KL divergences using samples from distrubutions.  
+* `bayes_linear_regression/` a set of classes and functions for performing Bayesian linear regression.
+* `bayes_linear_regression/examples/` a set of examples that demonstrate some of the functionality of the code.
 * `notebooks/` Jupyter notebooks that are used to play with the code. 
 
 This repository also contains a rough write-up of the theory behind the methods implemented here. 
@@ -25,7 +25,8 @@ This repository also contains a rough write-up of the theory behind the methods 
 Bayesian regression problems using normal-inverse-gamma priors have analytical marginal likelihoods. This makes these models
 useful for validating methods that estimate marginal likelihoods, as we are trying to do here.
 ```
-import norm_inv_gamma as nig
+from bayes_linear_regression import norm_inv_gamma as nig
+import numpy as np
 ```
 First, we need to specify the parameters of the prior. In this demonstration, we want our model to have 2 regression parameters: one
 intercept and one gradient. We need to set the prior covariance matrix between these 2 parameters as well as the mean of
@@ -62,7 +63,7 @@ As described [here](Bounding_marginal_likelihoods_with_deep_learning.pdf), calcu
 between the prior and posterior allows us to get an _upper_ bound to the marginal likelihood. The module `kl_lower_bounds`
 can estimate this lower bound using neural nets implemented with `Jax`.
 ```python
-import kl_lower_bounds as klb
+from kl_lower_bounds import kl_lower_bounds as klb
 ```
 Using the `klb.get_kl_lower_bound`, we can estimate the KL divergence between the prior and the postirior as long as we
 have samples from both. So let's quickly generate 5000 samples from each:

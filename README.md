@@ -9,7 +9,19 @@ To help test this new bound, this repo currently implements 2 modules. As descri
 using normal-inverse-gamma priors and the second is for estimating lower bounds of the Kullback-Leibler divergence between
 between 2 distributions using samples from those distributions. 
 
-## Linear regression using normal-inverse-gamma priors
+## Manifest
+* `kl_lower_bounds.py` Jax-implementated neural nets that can estimate the lower bound the of KL divergences using samples from distrubutions.  
+* `norm_inv_gamma.py` a set of classes and functions for performing Bayesian linear regression.
+* `examples/` a set of examples that demonstrate some of the functionality of the code.
+* `notebooks/` Jupyter notebooks that are used to play with the code. 
+
+This repository also contains a rough write-up of the theory behind the methods implemented here. 
+* `Bounding_marginal_likelihoods_with_deep_learning.pdf` a rough write-up of a way to estimate marginal likelihoods.
+* `write-up/` the Tex file and notes for the write-up PDF.
+* `references` PDFs of prior relevant work.
+
+## Usage
+### Linear regression using normal-inverse-gamma priors
 Bayesian regression problems using normal-inverse-gamma priors have analytical marginal likelihoods. This makes these models
 useful for validating methods that estimate marginal likelihoods, as we are trying to do here.
 ```
@@ -45,7 +57,7 @@ marginal likelihood of the posterior distribution can be accessed like so:
 print(post.log_marg_like)
 ```
 
-## The lower bounds to the KL divergence 
+### The lower bounds to the KL divergence 
 As described [here](Bounding_marginal_likelihoods_with_deep_learning.pdf), calculating a lower bound of the KL divergence
 between the prior and posterior allows us to get an _upper_ bound to the marginal likelihood. The module `kl_lower_bounds`
 can estimate this lower bound using neural nets implemented with `Jax`.
